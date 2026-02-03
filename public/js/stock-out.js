@@ -35,13 +35,13 @@ $(document).ready(function () {
         e.preventDefault();
 
         const data = {
-            item_id: $(this).find('[name="item_id"]').val(),
-            quantity: $(this).find('[name="quantity"]').val(),
+            item_id: parseInt($(this).find('[name="item_id"]').val()),
+            quantity: parseInt($(this).find('[name="quantity"]').val()),
             requested_by: $(this).find('[name="requested_by"]').val(),
             purpose: $(this).find('[name="purpose"]').val(),
             released_by: $(this).find('[name="released_by"]').val()
         };
-        console.log(data.item_id, data.quantity, data.reference, data.received_by);
+        console.log(data.item_id, data.quantity, data.requested_by, data.purpose, data.released_by);
 
         $.ajax({
             url: '/Inventory/api/stockOut',

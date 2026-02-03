@@ -40,66 +40,51 @@ class StockOut extends Controller {
     }
 
     public function create($data) {
-        $quantity     = (int) strip_tags(trim($data['quantity']));
-        $requested_by = strip_tags(trim($data['requested_by']));
-        $purpose      = strip_tags(trim($data['purpose']));
-        $released_by  = strip_tags(trim($data['released_by']));
-        $item_id      = (int) $data['item_id'];
+        $quantity     = isset($data['quantity']) ? (int) $data['quantity'] : 0;
+        $requested_by = isset($data['requested_by']) ? trim(strip_tags($data['requested_by'])) : '';
+        $purpose      = isset($data['purpose']) ? trim(strip_tags($data['purpose'])) : '';
+        $released_by  = isset($data['released_by']) ? trim(strip_tags($data['released_by'])) : '';
+        $item_id      = isset($data['item_id']) ? (int) $data['item_id'] : 0;
 
-        $date_released = date('Y-m-d H:i:s'); // current timestamp
+        $date_released = date('Y-m-d H:i:s'); 
 
         try {
             $this->conn->beginTransaction();
 
-            //Check available stock in tbl_stock
-            $checkStock = $this->conn->prepare(
-                "SELECT quantity FROM tbl_stock WHERE item_id = ? FOR UPDATE"
-            );
+            //Check stock
+            $checkStock = $this->conn->prepare("SELECT quantity FROM tbl_stock WHERE item_id = ? FOR UPDATE");
             $checkStock->execute([$item_id]);
             $stock = $checkStock->fetch(PDO::FETCH_ASSOC);
-
             if (!$stock || $stock['quantity'] < $quantity) {
                 throw new Exception('❌ Insufficient stock in main inventory.');
             }
 
-            //Check available stock in tbl_stock_in
-            $checkStockIn = $this->conn->prepare(
-                "SELECT quantity FROM tbl_stock_in WHERE item_id = ? FOR UPDATE"
-            );
+            $checkStockIn = $this->conn->prepare("SELECT quantity FROM tbl_stock_in WHERE item_id = ? FOR UPDATE");
             $checkStockIn->execute([$item_id]);
             $stockIn = $checkStockIn->fetch(PDO::FETCH_ASSOC);
-
             if (!$stockIn || $stockIn['quantity'] < $quantity) {
-                throw new Exception('❌ Insufficient stock from stock-in records.');
+                throw new Exception('❌ Insufficient stock in stock-in records.');
             }
 
-            //Insert into stock_out table
-            $query = "INSERT INTO {$this->table} 
-                    (quantity, requested_by, purpose, date_released, released_by, item_id) 
-                    VALUES (?, ?, ?, ?, ?, ?)";
-            $stmt = $this->conn->prepare($query);
+            //Insert
+            $stmt = $this->conn->prepare("INSERT INTO {$this->table} 
+                (quantity, requested_by, purpose, date_released, released_by, item_id)
+                VALUES (?, ?, ?, ?, ?, ?)");
             $stmt->execute([$quantity, $requested_by, $purpose, $date_released, $released_by, $item_id]);
             $stockOutId = $this->conn->lastInsertId();
 
-            //Update tbl_stock quantity
-            $updateQuery = "UPDATE tbl_stock 
-                            SET quantity = quantity - ? 
-                            WHERE item_id = ?";
-            $updateStmt = $this->conn->prepare($updateQuery);
-            $updateStmt->execute([$quantity, $item_id]);
-
-            //Update tbl_stock_in quantity
-            $updateOutQuery = "UPDATE tbl_stock_in
-                            SET quantity = quantity - ? 
-                            WHERE item_id = ?";
-            $updateOutStmt = $this->conn->prepare($updateOutQuery);
-            $updateOutStmt->execute([$quantity, $item_id]);
+            //Update main stock
+            $stmt = $this->conn->prepare("UPDATE tbl_stock SET quantity = quantity - ? WHERE item_id = ?");
+            $stmt->execute([$quantity, $item_id]);
+            if ($stmt->rowCount() === 0) throw new Exception('❌ Failed to update main stock.');
 
             $this->conn->commit();
             return $stockOutId;
+
         } catch (Exception $e) {
             $this->conn->rollBack();
-            return false;
+            error_log("StockOut Error: " . $e->getMessage());
+            return false; // <- RETURN FALSE so controller knows it failed
         }
     }
 }
