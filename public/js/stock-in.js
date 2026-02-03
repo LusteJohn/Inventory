@@ -113,9 +113,10 @@ $(document).ready(function () {
                             class="btn btn-sm btn-warning editBtn"
                             data-bs-toggle="modal"
                             data-bs-target="#editStockInModal"
-                            data-id="${row.stock_id}"
-                            data-item-id="${row.item_id}"
-                            data-quantity="${row.quantity}">
+                            data-id="${row.stock_in_id}"
+                            data-quantity="${row.quantity}"
+                            data-reference="${row.reference}"
+                            data-received_by="${row.received_by}">
                             <i class="bi bi-pencil"></i>
                         </button>
                     `;
@@ -131,5 +132,65 @@ $(document).ready(function () {
             info: "Showing _START_ to _END_ of _TOTAL_ items",
             paginate: { previous: "«", next: "»" }
         }
+    });
+
+    // Open modal and fill data
+    $('#stocksInTable tbody').on('click', '.editBtn', function () {
+        const btn = $(this);
+        $('#edit_id').val(btn.data('id'));
+        $('#edit_quantity').val(btn.data('quantity'));
+        $('#edit_reference').val(btn.data('reference'));
+        $('#edit_received_by').val(btn.data('received_by'));
+    });
+
+    // Submit edit form via AJAX
+    $('#editStockInForm').on('submit', function (e) {
+        e.preventDefault();
+
+        const id = $('#edit_id').val();
+        const data = {
+            quantity: $('#edit_quantity').val(),
+            reference: $('#edit_reference').val(),
+            received_by: $('#edit_received_by').val()
+        };
+
+        $.ajax({
+            url: `/Inventory/api/stockIn/${id}`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (res) {
+                if (res.success) {
+                    const editStockInModalEl = document.getElementById('editStockInModal');
+                    const editStockInModal = bootstrap.Modal.getInstance(editStockInModalEl) || new bootstrap.Modal(editStockInModalEl);
+                    editStockInModal.hide();
+                    
+                    $('.modal-backdrop').remove();
+                    // Reload DataTable
+                    table.ajax.reload();
+                    // SweetAlert success
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated!',
+                        text: res.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: res.error
+                    });
+                }
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed',
+                    text: 'Failed to update item.'
+                });
+            }
+        });
     });
 })

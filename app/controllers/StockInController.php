@@ -47,5 +47,33 @@ class StockInController extends Controller {
             $this->jsonResponse(['success' => false, 'error' => 'Failed to add stock in'], 500);
         }
     }
+
+    public function update($id) {
+        $data = $this->getJsonInput();
+        
+        if (!$this->stockInModel->getById($id)) {
+            $this->jsonResponse(['success' => false, 'error' => 'Stock In not found'], 404);
+        }
+        
+        if (empty($data['quantity']) || empty($data['reference']) || empty($data['received_by'])) {
+            $this->jsonResponse([
+                'success' => false,
+                'error' => 'All fields are required'
+            ], 400);
+        }
+        
+        $result = $this->stockInModel->update($id, $data);
+        
+        if ($result) {
+            $stockIn = $this->stockInModel->getById($id);
+            $this->jsonResponse([
+                'success' => true,
+                'message' => 'Stock In updated successfully',
+                'data' => $stockIn
+            ]);
+        } else {
+            $this->jsonResponse(['success' => false, 'error' => 'Failed to update book'], 500);
+        }
+    }
 }
 ?>
