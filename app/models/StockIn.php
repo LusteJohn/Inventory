@@ -82,6 +82,33 @@ class StockIn {
         }
     }
 
+    public function update($id, $data) {
+        // Sanitize input
+        $quantity    = (int) strip_tags(trim($data['quantity']));
+        $reference   = strip_tags(trim($data['reference']));
+        $received_by = strip_tags(trim($data['received_by']));
+        //$item_id   = strip_tags(trim($data['item_id']));
+
+        $id = (int)$id; // ensure ID is integer
+        $date_updated = date('Y-m-d H:i:s');
+
+        $query = "UPDATE " . $this->table . " 
+                  SET quantity = ?, 
+                    reference = ?,
+                    received_by = ?,
+                    date_updated = ?
+                  WHERE stock_in_id = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        return $stmt->execute([$quantity, $reference, $received_by, $date_updated, $id]);
+    }
+    
+    public function delete($id) {
+        $query = "DELETE FROM " . $this->table . " WHERE stock_in_id = ?";
+        $stmt = $this->conn->prepare($query);
+        return $stmt->execute([$id]);
+    }
+
 }
 
 ?>

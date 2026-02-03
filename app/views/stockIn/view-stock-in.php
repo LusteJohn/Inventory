@@ -63,24 +63,20 @@
 </div>
 
 <!-- Edit Stock Modal -->
-<div class="modal fade" id="editStockModal">
+<div class="modal fade" id="editStockInModal">
   <div class="modal-dialog">
-    <form id="editStockForm" class="modal-content">
+    <form id="editStockInForm" class="modal-content">
       <input type="hidden" name="id" id="edit_id">
 
       <div class="modal-header">
-        <h5>Edit Stock</h5>
+        <h5>Edit Stock In</h5>
         <button class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
       <div class="modal-body">
-        <div class="mb-3">
-            <label for="edit_itemDropdown" class="form-label">Select Item</label>
-            <select id="edit_itemDropdown" class="form-select" required>
-                <option value="">-- Select Item --</option>
-            </select>
-        </div>
         <input name="quantity" id="edit_quantity" type="number" class="form-control mb-2" placeholder="Quantity" required>
+        <input name="reference" id="edit_reference" type="text" class="form-control mb-2" placeholder="Reference" required>
+        <input name="received_by" id="edit_received_by" type="text" class="form-control mb-2" placeholder="Received By" required>
       </div>
 
       <div class="modal-footer">
